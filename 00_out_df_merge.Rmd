@@ -1,0 +1,32 @@
+---
+title: "00_out_df_merge"
+author: "Puvvula"
+date: "2023-11-09"
+output: pdf_document
+---
+
+```{r}
+load_csv_files("~/Documents/pa_births/raw_data", assign_to_global = T)
+```
+
+```{r}
+# Get a list of data frames from the global environment
+data_frames_list <- mget(ls(pattern = "data_"), envir = .GlobalEnv)
+
+# Convert variable names to lowercase and convert all columns to characters before appending
+combined_data <- bind_rows(data_frames_list %>%
+                             map(~ .x %>%
+                                    rename_all(tolower) %>%
+                                    mutate_all(as.character)))
+```
+
+```{r}
+saveRDS(combined_data, file = "~/Documents/pa_births/raw_data/pa_birth_regist.rds")
+```
+
+#save in sas format
+```{r}
+library(haven)
+write_xpt(pa_birth, "~/Documents/pa_births/raw_data/pa_birth_regist.sas7bdat")
+```
+

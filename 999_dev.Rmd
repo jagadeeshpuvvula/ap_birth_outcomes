@@ -1,0 +1,37 @@
+---
+title: "999_dev"
+author: "Puvvula"
+date: "2023-11-09"
+output: pdf_document
+---
+
+```{r}
+load_csv_files <- function(folder_path, assign_to_global = FALSE) {
+  # Get a list of all CSV files in the folder
+  csv_files <- list.files(path = folder_path, pattern = "\\.csv$", full.names = TRUE)
+
+  # Create an empty list to store the data frames
+  data_frames <- vector("list", length = length(csv_files))
+
+  # Loop through each CSV file and read it into a data frame
+  for (i in seq_along(csv_files)) {
+    data_frames[[i]] <- read.csv(csv_files[i])
+  }
+
+  # Optionally, assign each data frame to a variable in the global environment
+  if (assign_to_global) {
+    for (i in seq_along(data_frames)) {
+      assign(paste0("data_", i), data_frames[[i]], envir = .GlobalEnv)
+    }
+  }
+
+  # Return the list of data frames
+  return(data_frames)
+}
+
+# Example usage:
+folder_path <- "~/Documents/pa_births/raw_data"
+loaded_data <- load_csv_files(folder_path, assign_to_global = TRUE)
+
+```
+

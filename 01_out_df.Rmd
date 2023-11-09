@@ -1,0 +1,27 @@
+---
+title: "01_out_df"
+author: "Puvvula"
+date: "2023-11-09"
+output: pdf_document
+---
+
+```{r}
+library(pacman)
+p_load(tidyverse, janitor, here)
+```
+
+```{r}
+pa_birth<- readRDS("~/Documents/pa_births/raw_data/pa_birth_regist.rds")
+```
+
+```{r}
+na_summary <- pa_birth %>%
+  summarise_all(~ sum(is.na(.))) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "na_count") %>%
+  mutate(variable = as.character(variable),
+         na_percent = sprintf("%.2f%%", (na_count / nrow(pa_birth)) * 100)) %>%
+  as_tibble()
+
+write_csv(na_summary, "~/Documents/pa_births/raw_data/na_counts.csv")
+```
+
