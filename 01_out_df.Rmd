@@ -10,8 +10,16 @@ library(pacman)
 p_load(tidyverse, janitor, here)
 ```
 
+#lat/long NA values has "000000000" values in default - switched to NA here
 ```{r}
-pa_birth<- readRDS("~/Documents/pa_births/raw_data/pa_birth_regist.rds")
+pa_birth<- readRDS("~/Documents/pa_births/raw_data/pa_birth_regist.rds") |>
+  mutate(across(c(lat, long), as.character),  # Convert to character
+         lat = ifelse(lat == "000000000", NA_character_, lat),
+         long = ifelse(lat == "000000000", NA_character_, long),
+         lat = ifelse(substr(lat, 1, 1) == "0", substr(lat, 2, nchar(lat)), lat),
+         long = ifelse(substr(long, 1, 1) == "0", substr(long, 2, nchar(long)), long))
+
+
 ```
 
 ```{r}
@@ -24,4 +32,17 @@ na_summary <- pa_birth %>%
 
 write_csv(na_summary, "~/Documents/pa_births/raw_data/na_counts.csv")
 ```
+
+#validation of coordinates
+```{r}
+ggplot(pa_birth, aes(x = as.numeric(long), y = as.numeric(lat))) +
+  geom_point() +
+  labs(title = "Births DB - Pennsylvania",
+       x = "Longitude",
+       y = "Latitude") +
+  theme_void()
+```
+
+
+
 
