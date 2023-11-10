@@ -20,13 +20,28 @@ combined_data <- bind_rows(data_frames_list %>%
                                     mutate_all(as.character)))
 ```
 
+#append lat/long variables
+```{r}
+#merged outcome data
+outcome_df<- readRDS("~/Documents/pa_births/raw_data/pa_birth_regist.rds")
+
+#lat/long files
+geo_1<- read_csv("~/Documents/pa_births/raw_data/Births_From_2010_to_2015_Geocode.csv") |> mutate_all(as.character)
+geo_2<- read_csv("~/Documents/pa_births/raw_data/Births_From_2016_to_2020_Geocode.csv") |> mutate_all(as.character)
+
+geo_df<- bind_rows(geo_1, geo_2)
+
+combined_data <- full_join(outcome_df, geo_df, by = c("id"= "ID"))
+```
+
+#export final version - export on Nov 10, 2023
 ```{r}
 saveRDS(combined_data, file = "~/Documents/pa_births/raw_data/pa_birth_regist.rds")
 ```
 
-#save in sas format
+#save in sas format - export on Nov 10, 2023
 ```{r}
 library(haven)
-write_xpt(pa_birth, "~/Documents/pa_births/raw_data/pa_birth_regist.sas7bdat")
+write_xpt(combined_data, "~/Documents/pa_births/raw_data/pa_birth_regist.sas7bdat")
 ```
 
