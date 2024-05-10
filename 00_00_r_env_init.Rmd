@@ -1,0 +1,12 @@
+---
+title: "00_00_r_env_init"
+author: "Puvvula"
+date: "2024-03-19"
+output: pdf_document
+---
+
+```{r}
+library(pacman)
+p_load(tidyverse, parallel, raster, doParallel, sf)
+```
+

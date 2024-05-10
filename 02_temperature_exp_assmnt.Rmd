@@ -1,0 +1,50 @@
+---
+title: "02_temperature_exp_assmnt"
+author: "Puvvula"
+date: "2024-03-19"
+output: pdf_document
+---
+
+#read registry
+```{r}
+pa_birth<- readRDS("~/Documents/pa_births/formatted_data/pa_birth_formatted.rds") |>
+  filter(deceased != "Y") |>
+  drop_na(yrlstmen, molstmen, daylstme, 
+          childmthb, childdayb, childyrb, 
+          lat, long) |>
+  filter(lat != "" & long != "")|>
+  mutate(lmp_date = as.Date(paste(yrlstmen, molstmen, daylstme, sep = "-")),
+         delivery_date = as.Date(paste(childyrb, childmthb, childdayb, sep = "-")),
+         start_date = lmp_date - days(14)) |>
+  mutate(lat = str_replace(lat, "^0+", ""),
+         long = str_replace(long, "^0+", "")) |>
+  mutate_at(vars(lat, long), as.numeric) |>
+  dplyr::select(id, lat, long, start_date, delivery_date)
+```
+
+```{r}
+#b1: 1-9688
+#b2: 9689-19689
+#b3: 19690-25690
+#b4: 25691-30690
+#b5: 30691-35690
+#b6: 35691-40690
+#b7: 40691-45690
+#b8: 45691-55690
+```
+
+
+#split data and run in batches
+```{r}
+x<- pa_birth[45691:55690,]
+rm(pa_birth)
+gc()
+Sys.time()
+pa_birth_exp<- getRasterValueInRange(x, 
+                                     input_folder_name  = "/Volumes/Extreme Pro/tmax/daily")
+
+Sys.time()
+
+save(pa_birth_exp, file="~/Documents/pa_births/exp_assmt/pa_birth_exp_b8.rda")
+```
+

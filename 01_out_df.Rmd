@@ -11,18 +11,117 @@ p_load(tidyverse, janitor, here)
 ```
 
 #lat/long NA values has "000000000" values in default - switched to NA here
+#replaced all the variables with unknown values to NA
 ```{r}
 pa_birth<- readRDS("~/Documents/pa_births/raw_data/pa_birth_regist.rds") |>
   mutate(across(c(lat, long), as.character),  # Convert to character
          lat = ifelse(lat == "000000000", NA_character_, lat),
          long = ifelse(lat == "000000000", NA_character_, long),
          lat = ifelse(substr(lat, 1, 1) == "0", substr(lat, 2, nchar(lat)), lat),
-         long = ifelse(substr(long, 1, 1) == "0", substr(long, 2, nchar(long)), long))
-
+         long = ifelse(substr(long, 1, 1) == "0", substr(long, 2, nchar(long)), long),
+         #======================================================================#
+         sex = ifelse(sex == "U", NA_character_, sex),
+         mothage = ifelse(mothage == "99", NA_character_, mothage), #mom_age
+         fipsscode = ifelse(fipsscode == "ZZ", NA_character_, fipsscode), #state_code
+         fipsccode = ifelse(fipsccode == "999", NA_character_, fipsccode), #county_code
+         fipspcode = ifelse(fipspcode == "99999", NA_character_, fipspcode), #place_code
+         fipscountry = ifelse(fipscountry == "ZZ", NA_character_, fipscountry), #country_code
+         #======================================================================#
+         fathage = ifelse(fathage == "99", NA_character_, fathage), #father_age
+         marital = ifelse(marital == "U", NA_character_, marital), #mom_married?
+         mothedu = ifelse(mothedu == "9", NA_character_, mothedu), #mom_education
+         mothhisp = ifelse(mothhisp == "9", NA_character_, mothhisp), #mom_Hispanic_orig
+         mothrace = ifelse(mothrace %in% c("16", "17"), NA_character_, mothrace), #mom_Hispanic_orig
+         fathedu = ifelse(fathedu == "9", NA_character_, fathedu), #father_education
+         fathhisp = ifelse(fathhisp == "9", NA_character_, fathhisp), #father_Hispanic_orig
+         fathrace = ifelse(fathrace %in% c("16", "17"), NA_character_, fathrace), #father_race
+         #======================================================================#
+         placebth = ifelse(placebth == "9", NA_character_, placebth), #delivered_at
+         mfpc = ifelse(mfpc == "88", NA_character_, mfpc), #month_first_prenatal_care_visit
+         dfpc = ifelse(dfpc == "88", NA_character_, dfpc), #date_first_prenatal_care_visit
+         yfpc = ifelse(yfpc == "8888", NA_character_, yfpc), #year_first_prenatal_care_visit
+         mlpc = ifelse(mlpc == "88", NA_character_, mlpc), #month_last_prenatal_care_visit
+         dlpc = ifelse(dlpc == "88", NA_character_, dlpc), #date_last_prenatal_care_visit
+         ylpc = ifelse(ylpc == "8888", NA_character_, ylpc), #year_last_prenatal_care_visit
+         nopv = ifelse(nopv == "88", NA_character_, nopv), #number_of_prenatal_visits
+         momhtfeet = ifelse(momhtfeet == "9", NA_character_, momhtfeet), #mother_height_ft
+         momhtinches = ifelse(momhtinches == "99", NA_character_, momhtinches), #mother_height_inch
+         mppwgt = ifelse(mppwgt == "999", NA_character_, mppwgt), #pre_pregnancy_weight_pounds
+         mwgtdel = ifelse(mwgtdel == "999", NA_character_, mwgtdel), #mom_weight_delivery_pounds
+         mwic = ifelse(mwic == "U", NA_character_, mwic), #mom_received_WIC
+         lbirth = ifelse(lbirth == "99", NA_character_, lbirth), #number_of_live_births_delivered_by_mom
+         dbirth = ifelse(dbirth == "99", NA_character_, dbirth), #number_of_fetal_deaths_by_mom
+         molastlb = ifelse(molastlb == "88", NA_character_, molastlb), #month_last_live_birth_delivery
+         yrlastlb = ifelse(yrlastlb == "8888", NA_character_, yrlastlb), #month_last_live_birth_delivery
+         smkpr = ifelse(smkpr == "99", NA_character_, smkpr), #cigarettes_smoked_3_months_before_pregnancy
+         smkftm = ifelse(smkftm == "99", NA_character_, smkftm), #cigarettes_smoked_first_trimester
+         smkstm = ifelse(smkstm == "99", NA_character_, smkstm), #cigarettes_smoked_second_trimester
+         smkltm = ifelse(smkltm == "99", NA_character_, smkltm), #cigarettes_smoked_third_trimester
+         payment = ifelse(payment == "9", NA_character_, payment), #payment_source_for_child_delivery
+         #======================================================================#
+         #R series variables = risk factors - mom during pregnancy
+         r10 = ifelse(r10 == "99", NA_character_, r10), #payment_source_for_child_delivery
+         #======================================================================#
+         met4 = ifelse(met4 == "9", NA_character_, met4), #route_and_method_of_delivery
+         met3 = ifelse(met3 == "9", NA_character_, met3), #route_and_method_of_delivery
+         #======================================================================#
+         bweight = ifelse(bweight == "9999", NA_character_, bweight), #birth_weight_grams
+         lop = ifelse(lop == "99", NA_character_, lop), #obstetric_estimated_length_of_pregnancy
+         apgars5 = ifelse(apgars5 == "99", NA_character_, apgars5), #APGAR_5_min
+         apgars10 = ifelse(apgars10 %in% c("98", "99"), NA_character_, apgars10), #APGAR_10_min
+         plural = ifelse(plural == "9", NA_character_, plural), #APGAR_5_min
+         order = ifelse(order %in% c("0", "9"), NA_character_, order), #birth_order
+         #======================================================================#
+         #O series variables = if mom underwent obstetric procedures
+         #ONSET series variables = indicating onset of labor
+         molstmen = ifelse(molstmen == "99", NA_character_, molstmen), #month_last_normal_menses_began
+         daylstme = ifelse(daylstme == "99", NA_character_, daylstme), #day_last_normal_menses_began
+         yrlstmen = ifelse(yrlstmen == "9999", NA_character_, yrlstmen), #year_last_normal_menses_began
+         #======================================================================#
+         #AC series of variables = Abnormal condition of newborn
+         #======================================================================#
+         #CA series of variables = congenital anomalies of newborn
+         #======================================================================#
+         mombirthplace = ifelse(mombirthplace == "9999", NA_character_, mombirthplace), #fips_of_mom_birth_place
+         )|>
+  select(-c("motherhisplit", "momracemulti", "momraceothermulti", "fotherhisplit",
+            "fathracemulti", "fathraceothermulti", "terminat", "molstter", "yrlstter",
+            "immuniz")) |>
+  mutate(across(
+    c("sex", "momresstate", "momrescounty", "momrescity", "momreszip", "momrescountry",
+      "tract", "blkgrp", "fipsscode", "fipsccode", "fipspcode", "fipscountry",
+      "mommailingstate", "mommailingcity", "mommailingzip", "mommailingcountry",
+      "marital", "mothedu",  "mothhisp", "mothrace", "fathedu", "fathhisp", "fathrace",
+      "placebth", "mwic",
+      "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9","r10", "r11",
+      "o1", "o2", "o3", "o4", "o5",
+      "onset1", "onset2", "onset3", "onset4",
+      "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10",
+      "met1", "met2", "met3", "met4",
+      "met5", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
+      "ac1", "ac2", "ac3", "ac4", "ac5", "ac6", "ac7", "ac8",
+      "ca1", "ca2", "ca3", "ca4", "ca5", "ca6", "ca7", "ca8", "ca9", "ca10", "ca11", "ca12", "ca13", "ca14", "ca15",
+      "childliving", "breastfed",
+      "mombirthplace", "deceased", "prepregeclampsia", "payment"),
+    as.factor
+  )) |>
+  mutate(across(
+    c("mothage", "nopv", "momhtfeet", "momhtinches", "mppwgt", "mwgtdel", "lbirth",
+      "dbirth", "smkpr", "smkftm", "smkstm", "smkltm", "bweight", "lop", 
+      "apgars5", "apgars10"),
+    as.numeric
+  ))
 
 ```
 
 ```{r}
+saveRDS(pa_birth, file = "~/Documents/pa_births/formatted_data/pa_birth_formatted.rds")
+```
+
+#work with formatted data
+```{r}
+pa_birth<- readRDS("~/Documents/pa_births/formatted_data/pa_birth_formatted.rds")
+
 na_summary <- pa_birth %>%
   summarise_all(~ sum(is.na(.))) %>%
   pivot_longer(everything(), names_to = "variable", values_to = "na_count") %>%
@@ -30,19 +129,36 @@ na_summary <- pa_birth %>%
          na_percent = sprintf("%.2f%%", (na_count / nrow(pa_birth)) * 100)) %>%
   as_tibble()
 
-write_csv(na_summary, "~/Documents/pa_births/raw_data/na_counts.csv")
+write_csv(na_summary, "~/Documents/pa_births/formatted_data/na_counts.csv")
 ```
 
-#validation of coordinates
+#data summaries
 ```{r}
-ggplot(pa_birth, aes(x = as.numeric(long), y = as.numeric(lat))) +
-  geom_point() +
-  labs(title = "Births DB - Pennsylvania",
-       x = "Longitude",
-       y = "Latitude") +
-  theme_void()
+x<- summarize_variables(data = pa_birth,
+                         categorical_variables = c(
+                           "sex", 
+                           "marital", "mothedu",  "mothhisp", "mothrace", "mwic",
+                           "fathedu", "fathhisp", "fathrace",
+                           "placebth", 
+                           "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9","r10", "r11",
+                           "o1", "o2", "o3", "o4", "o5",
+                           "onset1", "onset2", "onset3", "onset4",
+                           "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10",
+                           "met1", "met2", "met3", "met4", "met5", 
+                           "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
+                           "ac1", "ac2", "ac3", "ac4", "ac5", "ac6", "ac7", "ac8",
+                           "ca1", "ca2", "ca3", "ca4", "ca5", "ca6", "ca7", "ca8", "ca9", "ca10", "ca11", "ca12", "ca13", "ca14", "ca15",
+                           "childliving", "breastfed", "deceased", "prepregeclampsia", "payment"),
+                        continuous_variables = c(
+                          "mothage", "nopv", "momhtfeet", "momhtinches", "mppwgt", "mwgtdel", 
+                          "lbirth", "dbirth", 
+                          "smkpr", "smkftm", "smkstm", "smkltm", 
+                          "bweight", "lop", 
+                           "apgars5", "apgars10"))
 ```
 
-
+```{r}
+skimr::skim(pa_birth)
+```
 
 
