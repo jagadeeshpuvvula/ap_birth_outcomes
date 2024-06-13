@@ -7,7 +7,9 @@ output: pdf_document
 
 ```{r}
 library(pacman)
-p_load(tidyverse, parallel, raster, doParallel, sf)
+p_load(tidyverse, 
+       parallel, foreach, doParallel, 
+       raster, sf)
 ```
 
 directories
