@@ -10,3 +10,9 @@ library(pacman)
 p_load(tidyverse, parallel, raster, doParallel, sf)
 ```
 
+directories
+```{r}
+data_path <- "D:/pa_births/formatted_data/"
+result_path <- "D:/pa_births/results/"
+```
+

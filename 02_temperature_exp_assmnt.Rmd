@@ -7,7 +7,7 @@ output: pdf_document
 
 #read registry
 ```{r}
-pa_birth<- readRDS("~/Documents/pa_births/formatted_data/pa_birth_formatted.rds") |>
+pa_birth<- readRDS(paste0(data_path, "pa_birth_formatted.rds")) |>
   filter(deceased != "Y") |>
   drop_na(yrlstmen, molstmen, daylstme, 
           childmthb, childdayb, childyrb, 
@@ -22,6 +22,14 @@ pa_birth<- readRDS("~/Documents/pa_births/formatted_data/pa_birth_formatted.rds"
   dplyr::select(id, lat, long, start_date, delivery_date)
 ```
 
+#counts per year
+```{r}
+observations_per_year <- pa_birth |>
+  mutate(year = year(delivery_date)) |>
+  count(year)
+```
+
+
 ```{r}
 #b1: 1-9688
 #b2: 9689-19689
@@ -31,20 +39,28 @@ pa_birth<- readRDS("~/Documents/pa_births/formatted_data/pa_birth_formatted.rds"
 #b6: 35691-40690
 #b7: 40691-45690
 #b8: 45691-55690
+#b9: 55691-75690
+#b10: 75691-93803
+#b11: 93804-113852
 ```
 
 
 #split data and run in batches
 ```{r}
-x<- pa_birth[45691:55690,]
+x<- pa_birth[93804:113852,]
 rm(pa_birth)
 gc()
-Sys.time()
-pa_birth_exp<- getRasterValueInRange(x, 
-                                     input_folder_name  = "/Volumes/Extreme Pro/tmax/daily")
-
-Sys.time()
-
-save(pa_birth_exp, file="~/Documents/pa_births/exp_assmt/pa_birth_exp_b8.rda")
 ```
+
+#run a batch and save
+```{r}
+Sys.time()
+pa_birth_exp<- getRasterValueInRange(dataframe= x, 
+                                     input_folder_name  = "D:/pa_births/tmax/daily")
+
+
+save(pa_birth_exp, file="D:/pa_births/exp_assmt/pa_birth_exp_b11.rda")
+Sys.time()
+```
+
 
