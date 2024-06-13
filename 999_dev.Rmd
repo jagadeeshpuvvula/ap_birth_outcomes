@@ -5,6 +5,7 @@ date: "2023-11-09"
 output: pdf_document
 ---
 
+#dont run this anymore
 ```{r}
 load_csv_files <- function(folder_path, assign_to_global = FALSE) {
   # Get a list of all CSV files in the folder
@@ -30,8 +31,169 @@ load_csv_files <- function(folder_path, assign_to_global = FALSE) {
 }
 
 # Example usage:
-folder_path <- "~/Documents/pa_births/raw_data"
-loaded_data <- load_csv_files(folder_path, assign_to_global = TRUE)
+#folder_path <- "~/Documents/pa_births/raw_data"
+#loaded_data <- load_csv_files(folder_path, assign_to_global = TRUE)
+
+```
+
+#exposure assessment - get value for a point 
+```{r}
+getRasterValue <- function(latitude, longitude, raster_file) {
+  # Load the raster file
+  raster_data <- raster(raster_file)
+  
+  # Create a SpatialPoints object from the input latitude and longitude
+  coordinates <- cbind(longitude, latitude)
+  coordinates <- SpatialPoints(coordinates)
+  proj4string(coordinates) <- proj4string(raster_data)
+  
+  # Extract the raster value at the specified coordinates
+  value <- extract(raster_data, coordinates)
+  
+  return(value)
+}
+```
+
+#exposure assessment - get value by date range - for test/devleopment
+```{r}
+getRasterValueInRange_test <- function(latitude, longitude, partial_folder_name, start_date, end_date) {
+  # Create the start and end date patterns for file filtering
+  start_date_pattern <- format(start_date, "%Y%m%d")
+  end_date_pattern <- format(end_date, "%Y%m%d")
+  
+  # Initialize an empty vector to store extracted values
+  values <- c()
+  
+  # List files within the date range directly using the date pattern
+  matching_files <- list.files(path = partial_folder_name, pattern = sprintf("prism_tmax_us_30s_%s.*\\.bil$", paste0("(", start_date_pattern, "|", end_date_pattern, ")")), full.names = TRUE, recursive = TRUE)
+  
+  # Loop through each matching file
+  for (file in matching_files) {
+    # Extract date from the file name
+    file_date <- as.Date(gsub(".*_(\\d{8})\\.bil$", "\\1", file), format = "%Y%m%d")
+    
+    if (file_date >= start_date && file_date <= end_date) {
+      # Load the raster file
+      raster_data <- try(raster(file), silent = TRUE)
+      
+      # Check if raster file loads successfully
+      if (inherits(raster_data, "RasterLayer")) {
+        # Create SpatialPoints object from coordinates
+        coordinates <- SpatialPoints(matrix(c(longitude, latitude), ncol = 2))
+        proj4string(coordinates) <- CRS(proj4string(raster_data))
+        
+        # Extract the raster value at the specified coordinates
+        value <- extract(raster_data, coordinates)
+        
+        # Check if value is valid (numeric)
+        if (!is.na(value) && !is.nan(value)) {
+          # Append the extracted value to the values vector
+          values <- c(values, value)
+        }
+      }
+    }
+  }
+  
+  # Calculate the average of extracted values
+  average_value <- mean(values, na.rm = TRUE)
+  
+  return(average_value)
+}
+```
+
+#Exposure assessment - Temperature - for production
+```{r}
+library(parallel)
+library(raster)
+library(doParallel)
+
+getRasterValueInRange <- function(dataframe, input_folder_name) {
+  # Initialize an empty list to store extracted values for each observation
+  raster_values <- vector("list", length = nrow(dataframe))
+  
+  # Setup parallel processing
+  cl <- makeCluster(detectCores())  # Create a cluster with available cores
+  registerDoParallel(cl)  # Register parallel backend
+  
+  # Parallelized loop over each row of the dataframe
+  raster_values <- foreach(i = 1:nrow(dataframe), .packages = c("raster")) %dopar% {
+    latitude <- dataframe[i, "lat"]
+    longitude <- dataframe[i, "long"]
+    start_date <- dataframe[i, "start_date"]
+    end_date <- dataframe[i, "delivery_date"]
+    
+    # Calculate the number of weeks between start and end dates
+    num_weeks <- as.numeric(difftime(end_date, start_date, units = "days")) / 7
+    
+    # Handle cases where num_weeks is negative or zero
+    if (num_weeks <= 0) {
+      # Print a warning message and skip to the next observation
+      warning(paste("Invalid date range for observation", i, "- Skipping..."))
+      return(NULL)
+    }
+    
+    # Initialize an empty vector to store average values for each week
+    weekly_values <- numeric(num_weeks)
+    
+    # Iterate through each week
+    for (j in 1:num_weeks) {
+      # Calculate start and end dates for this week
+      week_start <- start_date + ((j - 1) * 7)
+      week_end <- min(week_start + 6, end_date)  # Ensure we don't exceed the end date
+      
+      # Create the start and end date patterns for file filtering
+      start_date_pattern <- format(week_start, "%Y%m%d")
+      end_date_pattern <- format(week_end, "%Y%m%d")
+      
+      # Initialize values for this week
+      weekly_value <- NA
+      
+      # List files within the date range directly using the date pattern
+      matching_files <- list.files(path = input_folder_name, pattern = sprintf("prism_tmax_us_30s_%s.*\\.bil$", paste0("(", start_date_pattern, "|", end_date_pattern, ")")), full.names = TRUE, recursive = TRUE)
+      
+      # Loop through each matching file
+      for (file in matching_files) {
+        # Extract date from the file name
+        file_date <- as.Date(gsub(".*_(\\d{8})\\.bil$", "\\1", file), format = "%Y%m%d")
+        
+        if (file_date >= week_start && file_date <= week_end) {
+          # Load the raster file
+          raster_data <- try(raster(file), silent = TRUE)
+          
+          # Check if raster file loads successfully
+          if (inherits(raster_data, "RasterLayer")) {
+            # Create SpatialPoints object from coordinates
+            coordinates <- SpatialPoints(matrix(c(longitude, latitude), ncol = 2))
+            proj4string(coordinates) <- CRS(proj4string(raster_data))
+            
+            # Extract the raster value at the specified coordinates
+            value <- extract(raster_data, coordinates)
+            
+            # Check if value is valid (numeric)
+            if (!is.na(value) && !is.nan(value)) {
+              # Update weekly_value if a valid value is found
+              weekly_value <- ifelse(is.na(weekly_value), value, (weekly_value + value) / 2)
+            }
+          }
+        }
+      }
+      
+      # Append the weekly_value to the weekly_values vector
+      weekly_values[j] <- sprintf("%.2f", weekly_value) # Round to 2 decimals
+    }
+    
+    # Return the weekly values for this observation
+    return(weekly_values)
+  }
+  
+  # Stop the parallel processing
+  stopCluster(cl)
+  
+  # Append the raster_values list to the dataframe
+  dataframe$raster_value <- raster_values
+  
+  return(dataframe)
+}
 
 ```
 
