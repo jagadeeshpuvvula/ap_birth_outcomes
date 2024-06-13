@@ -12,7 +12,7 @@ p_load(tidyverse,
        raster, sf)
 ```
 
-directories
+#directories
 ```{r}
 data_path <- "D:/pa_births/formatted_data/"
 result_path <- "D:/pa_births/results/"
